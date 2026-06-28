@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>English Learning Planner</title>
+<style>
+  :root {
+    --bg: #f7f6f3;
+    --card: #ffffff;
+    --border: #e4e2db;
+    --border-strong: #ccc9c0;
+    --text: #1a1a18;
+    --text-2: #5a5a55;
+    --text-3: #9a9990;
+    --accent: #3b6fd4;
+    --accent-bg: #eef3fb;
+    --accent-text: #1e4a9e;
+    --plan-bg: #f0edfc;
+    --plan-text: #4a35b0;
+    --plan-border: #c4b8f5;
+    --radius: 10px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #18181a;
+      --card: #242428;
+      --border: #333338;
+      --border-strong: #4a4a50;
+      --text: #f0efe8;
+      --text-2: #a0a098;
+      --text-3: #68685f;
+      --accent: #6b9aff;
+      --accent-bg: #1a2a4a;
+      --accent-text: #99bfff;
+      --plan-bg: #251f40;
+      --plan-text: #c4b8f5;
+      --plan-border: #4a3a8a;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100dvh; }
+
+  header {
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .app-title { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -0.2px; }
+  .app-sub { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+
+  main { padding: 16px; max-width: 520px; margin: 0 auto; }
+
+  .month-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .month-label { font-size: 17px; font-weight: 600; color: var(--text); }
+  .nav-btn {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--text-2); font-size: 18px;
+    transition: background 0.15s;
+  }
+  .nav-btn:active { background: var(--border); }
+
+  .calendar { background: var(--card); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; }
+  .day-headers { display: grid; grid-template-columns: repeat(7,1fr); border-bottom: 1px solid var(--border); }
+  .day-headers span {
+    text-align: center; padding: 8px 2px;
+    font-size: 11px; font-weight: 600; color: var(--text-3); letter-spacing: 0.3px;
+  }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+  .cell {
+    min-height: 64px; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+    padding: 5px 4px; cursor: pointer; user-select: none;
+    transition: background 0.12s;
+  }
+  .cell:nth-child(7n) { border-right: none; }
+  .cell:active:not(.off) { background: var(--border); }
+  .cell.off { cursor: default; background: var(--bg); }
+  .cell.off .dn { color: var(--text-3); opacity: 0.4; }
+  .cell.today { background: var(--accent-bg); }
+  .cell.planned { background: var(--plan-bg); }
+  .cell.today.planned { background: var(--accent-bg); }
+  .dn {
+    font-size: 12px; font-weight: 500; color: var(--text-2);
+    display: flex; align-items: center; gap: 3px; margin-bottom: 3px;
+  }
+  .cell.today .dn { color: var(--accent); font-weight: 700; }
+  .today-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .cell-time {
+    font-size: 10px; font-weight: 500;
+    color: var(--plan-text); margin-bottom: 2px;
+    display: flex; align-items: center; gap: 2px;
+  }
+  .cell.today .cell-time { color: var(--accent-text); }
+  .cell-topic {
+    font-size: 10px; color: var(--text-2); line-height: 1.3;
+    overflow: hidden; display: -webkit-box;
+    -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  }
+
+  .stat-bar {
+    margin-top: 12px; background: var(--card); border-radius: var(--radius);
+    border: 1px solid var(--border); padding: 10px 14px;
+    font-size: 13px; color: var(--text-2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stat-bar strong { color: var(--text); font-weight: 600; }
+  .stat-icon { font-size: 16px; }
+
+  .legend { display: flex; gap: 14px; margin-top: 10px; padding-left: 2px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-3); }
+  .leg-dot { width: 9px; height: 9px; border-radius: 2px; flex-shrink: 0; }
+
+  /* Modal */
+  .modal-bg {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); z-index: 100;
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 18px 18px 0 0;
+    width: 100%; max-width: 520px;
+    padding: 0 0 env(safe-area-inset-bottom,0);
+    animation: slideUp 0.22s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-handle { width: 36px; height: 4px; background: var(--border-strong); border-radius: 2px; margin: 10px auto 0; }
+  .modal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-date { font-size: 15px; font-weight: 600; }
+  .modal-close {
+    background: var(--bg); border: none; border-radius: 50%;
+    width: 30px; height: 30px; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-2);
+  }
+  .modal-body { padding: 16px 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 5px; letter-spacing: 0.2px; }
+  .field input, .field textarea {
+    width: 100%; font-family: var(--font);
+    font-size: 15px; color: var(--text);
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 12px;
+    outline: none; transition: border-color 0.15s;
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: none; line-height: 1.5; }
+  .time-row { display: flex; align-items: center; gap: 8px; }
+  .time-row input { text-align: center; }
+  .time-sep { color: var(--text-3); font-weight: 500; flex-shrink: 0; }
+  .modal-actions { display: flex; gap: 8px; padding: 4px 18px 16px; }
+  .btn-save {
+    flex: 1; background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius);
+    padding: 13px; font-size: 15px; font-weight: 600;
+    cursor: pointer; font-family: var(--font);
+  }
+  .btn-save:active { opacity: 0.85; }
+  .btn-del {
+    background: none; border: 1px solid var(--border-strong);
+    border-radius: var(--radius); padding: 13px 16px;
+    font-size: 15px; color: var(--text-2); cursor: pointer;
+    font-family: var(--font); white-space: nowrap;
+  }
+  .btn-del:active { background: var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="app-title">English Learning Planner</div>
+    <div class="app-sub">วางแผนการเรียนภาษาอังกฤษ</div>
+  </div>
+</header>
+
+<main>
+  <div class="month-nav">
+    <button class="nav-btn" onclick="chg(-1)" aria-label="เดือนก่อน">‹</button>
+    <div class="month-label" id="month-label"></div>
+    <button class="nav-btn" onclick="chg(1)" aria-label="เดือนถัดไป">›</button>
+  </div>
+
+  <div class="calendar">
+    <div class="day-headers">
+      <span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+  </div>
+
+  <div class="legend">
+    <div class="leg"><div class="leg-dot" style="background:var(--accent-bg);border:1px solid #93b8f0"></div>วันนี้</div>
+    <div class="leg"><div class="leg-dot" style="background:var(--plan-bg);border:1px solid var(--plan-border)"></div>มีแผน</div>
+  </div>
+
+  <div class="stat-bar" id="stat-bar">
+    <span class="stat-icon">📅</span>
+    <span id="stat-text">ยังไม่มีแผนในเดือนนี้</span>
+  </div>
+</main>
+
+<!-- Modal -->
+<div class="modal-bg" id="modal-bg" onclick="bgClick(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-date" id="modal-date"></div>
+      <button class="modal-close" onclick="closeDlg()" aria-label="ปิด">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>หัวข้อ / สิ่งที่จะเรียน</label>
+        <input type="text" id="f-topic" placeholder="เช่น ฟัง podcast EP.12, ทบทวนคำศัพท์ IELTS">
+      </div>
+      <div class="field">
+        <label>ช่วงเวลา</label>
+        <div class="time-row">
+          <input type="time" id="f-start">
+          <span class="time-sep">–</span>
+          <input type="time" id="f-end">
+        </div>
+      </div>
+      <div class="field">
+        <label>โน้ตเพิ่มเติม</label>
+        <textarea id="f-note" rows="3" placeholder="เป้าหมาย, ลิงก์เนื้อหา, สิ่งที่อยากทำต่อ..."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-del" id="btn-del" onclick="delEntry()" style="display:none">ลบ</button>
+      <button class="btn-save" onclick="saveEntry()">บันทึกแผน</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const DAYS=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const STORE_KEY='eng_planner_v1';
+const today=new Date();
+let cy=today.getFullYear(), cm=today.getMonth(), ek=null;
+
+function load(){try{return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}catch(e){return {}}}
+function save(d){try{localStorage.setItem(STORE_KEY,JSON.stringify(d))}catch(e){}}
+let data=load();
+
+function dk(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
+function fmtTime(t){if(!t)return '';const[h,m]=t.split(':');return `${h}:${m}`;}
+
+function render(){
+  document.getElementById('month-label').textContent=`${MONTHS[cm]} ${cy+543}`;
+  const g=document.getElementById('cal-grid');
+  g.innerHTML='';
+  const fd=new Date(cy,cm,1).getDay();
+  const dim=new Date(cy,cm+1,0).getDate();
+  const prev=new Date(cy,cm,0).getDate();
+
+  for(let i=0;i<fd;i++){
+    const c=document.createElement('div');
+    c.className='cell off';
+    c.innerHTML=`<div class="dn">${prev-fd+1+i}</div>`;
+    g.appendChild(c);
+  }
+  for(let d=1;d<=dim;d++){
+    const key=dk(cy,cm,d);
+    const e=data[key];
+    const isT=today.getFullYear()===cy&&today.getMonth()===cm&&today.getDate()===d;
+    const c=document.createElement('div');
+    let cls='cell';
+    if(isT)cls+=' today';
+    if(e&&(e.topic||e.start))cls+=' planned';
+    c.className=cls;
+    let h=`<div class="dn">${d}${isT?'<span class="today-dot"></span>':''}</div>`;
+    if(e){
+      if(e.start)h+=`<div class="cell-time">⏰ ${fmtTime(e.start)}${e.end?' – '+fmtTime(e.end):''}</div>`;
+      if(e.topic)h+=`<div class="cell-topic">${e.topic}</div>`;
+    }
+    c.innerHTML=h;
+    c.onclick=()=>open(cy,cm,d);
+    g.appendChild(c);
+  }
+  const rem=(7-(fd+dim)%7)%7;
+  for(let i=1;i<=rem;i++){
+    const c=document.createElement('div');c.className='cell off';
+    c.innerHTML=`<div class="dn">${i}</div>`;g.appendChild(c);
+  }
+
+  let count=0;
+  for(let d=1;d<=dim;d++){const k=dk(cy,cm,d);if(data[k]&&(data[k].topic||data[k].start))count++;}
+  document.getElementById('stat-text').innerHTML=
+    count===0?'ยังไม่มีแผนในเดือนนี้'
+    :`วางแผนแล้ว <strong>${count}</strong> วัน จาก ${dim} วัน`;
+}
+
+function open(y,m,d){
+  ek=dk(y,m,d);
+  const e=data[ek]||{};
+  const dd=new Date(y,m,d);
+  document.getElementById('modal-date').textContent=`${DAYS[dd.getDay()]}ที่ ${d} ${MONTHS[m]} ${y+543}`;
+  document.getElementById('f-topic').value=e.topic||'';
+  document.getElementById('f-start').value=e.start||'';
+  document.getElementById('f-end').value=e.end||'';
+  document.getElementById('f-note').value=e.note||'';
+  document.getElementById('btn-del').style.display=(data[ek]&&(data[ek].topic||data[ek].start))?'block':'none';
+  document.getElementById('modal-bg').classList.add('open');
+  setTimeout(()=>document.getElementById('f-topic').focus(),100);
+}
+
+function closeDlg(){document.getElementById('modal-bg').classList.remove('open');}
+function bgClick(e){if(e.target===document.getElementById('modal-bg'))closeDlg();}
+
+function saveEntry(){
+  const topic=document.getElementById('f-topic').value.trim();
+  const start=document.getElementById('f-start').value;
+  const end=document.getElementById('f-end').value;
+  const note=document.getElementById('f-note').value.trim();
+  if(!topic&&!start){closeDlg();return;}
+  data[ek]={topic,start,end,note};
+  save(data);closeDlg();render();
+}
+function delEntry(){
+  delete data[ek];save(data);closeDlg();render();
+}
+function chg(d){
+  cm+=d;
+  if(cm>11){cm=0;cy++;}
+  if(cm<0){cm=11;cy--;}
+  render();
+}
+render();
+</script>
+</body>
+</html>
